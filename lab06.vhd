@@ -32,9 +32,14 @@ architecture arch of lab06 is
 	signal data_i: std_logic_vector(7 downto 0);
 	signal data_o: std_logic_vector(7 downto 0);
 	signal trig_o: std_logic;
+
 	type FSM_type is (idle, start, transfer, stop);
-	signal counter: integer:= 0;
+	signal countertransfer: integer:= 0;
+	signal counterreciever: integer:= 0;
+	
 	signal bitsend: integer:= 0;
+
+	constant waittime: integer:= 104;  -- Baud rate is about 104 clock cycles
 	signal FSM: FSM_type;
 begin
 	gui: lab06_gui port map(clk=>clk,rx=>rx,tx=>tx,
@@ -47,6 +52,9 @@ begin
 	sdi<='0';
 	scl<='Z';
 	sda<='Z';
+
+
+	
 
 	process(clk)
 	begin
