@@ -34,13 +34,16 @@ architecture arch of lab06 is
 	signal trig_o: std_logic;
 
 	type FSM_type is (idle, start, transfer, stop);
+	signal FSM_tx: FSM_type;
+	signal FSM_rx: FSM_type;
 	signal countertransfer: integer:= 0;
 	signal counterreciever: integer:= 0;
 	
 	signal bitsend: integer:= 0;
+	signal bitrecieve: integer:= 0;
 
 	constant waittime: integer:= 104;  -- Baud rate is about 104 clock cycles
-	signal FSM: FSM_type;
+	
 begin
 	gui: lab06_gui port map(clk=>clk,rx=>rx,tx=>tx,
 		data_i=>data_i,data_o=>data_o,trig_o=>trig_o);
@@ -58,37 +61,52 @@ begin
 
 	process(clk)
 	begin
-		case FSM is 
+		if rising_edge(clk) then
+		case FSM_tx is 
 			when idle =>
 				 if (trig_o='1') then
-	                   FSM <= start;
+	                   FSM_tx <= start;
 	        
-	                   srx <= data_o(7);
+	                   countertransfer <= waittime-1;
 	               end if;
 
 			when start =>
+				if(counttransfer =0) then
 				
-				index <= 0;
-				FSM <= transfer;
-			when transfer =>
-				if(bitsend = 0) then
-					bitsend <= 105;
-					srx <= data_o(7-index);
-				index <= index + 1;
-				if (index = 7) then
-					FSM <= stop;
+				bitsend <= 0;
+			       	countertransfer<= waittime-1;
+				FSM_tx <= transfer;
+				
+				else
+					countertransfer <= countertransfer -1;
 				end if;
+			
+			when transfer =>
+				if(countertransfer = 0) then
+					if bitsend = 7 then
+					bitsend <= 0;
+					countertransfer <= waittime-1;
+					FSM_tx <= stop;
+					else
+					bitsend <= bitsend +1;
+					countertransfer <= waittime-1;
+					end if;
+				
 				else 
-					bitsend <= bitsend - 1;
-					FSM <= transfer;
+					countertransfer <= countertransfer - 1;
+				
 				end if;
 				
 
 			when stop =>
+				if countertransfer = 0 then
 				bitsend <= 0;
-				index <= 0;
+				countertransfer <= waittime -1;
 				FSM <= idle;
+				else 
+						countertransfer <= countertransfer-1;
+				end if;
 		end case;
-
+	end if;
 	end process;
 end arch;
